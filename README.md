@@ -7,11 +7,11 @@ mamatolmi의 백엔드 서버입니다.
 ## 🛠 Tech Stack
 
 
-- **Language**: Java 21
+- **Language**: Java 17
 - **Framework**: Spring Boot 3.x
 - **Database**: MySQL
 - **ORM**: Spring Data JPA
-- **Infrastructure**: AWS (EC2, S3, RDS)
+- **Infrastructure**: GCP
 
 <br>
 

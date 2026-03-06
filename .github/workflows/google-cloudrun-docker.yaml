@@ -109,6 +109,10 @@ jobs:
           # NOTE: If using a pre-built image, update the image name below:
 
           image: '${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.SERVICE }}/mamatolmi-api:${{ github.sha }}'
+          env_vars: |-
+            DB_URL=${{ secrets.DB_URL }}
+            DB_USERNAME=${{ secrets.DB_USERNAME }}
+            DB_PASSWORD=${{ secrets.DB_PASSWORD }}
       # If required, use the Cloud Run URL output in later steps
       - name: 'Show output'
         run: |2-

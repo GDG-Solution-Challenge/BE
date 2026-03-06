@@ -35,3 +35,17 @@ out/
 
 ### VS Code ###
 .vscode/
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+.terraform.lock.hcl
+
+# Credentials
+application_default_credentials.json
+*.json
+
+# Variable files
+*.tfvars
+*.tfvars.json

@@ -23,6 +23,7 @@ public class KidsNoteService {
     private static final int TTL_DAYS = 7;
 
     // 1. rawText 추출, 저장
+    // 이미지
     @Transactional
     public Long createKidsNote(Long kidId, MultipartFile image) throws IOException {
         Kid kid = kidRepository.findById(kidId)
@@ -41,6 +42,18 @@ public class KidsNoteService {
         KidsNote saved = kidsNoteRepository.save(note);
         return saved.getId();
 
+    }
+
+    // 텍스트
+    @Transactional
+    public Long createFromText(Long kidId, String text) {
+        Kid kid = kidRepository.findById(kidId)
+                .orElseThrow(()->new KidException(KidErrorCode.KID_NOT_FOUND));
+
+        LocalDateTime expiresAt = LocalDateTime.now().plusDays(TTL_DAYS);
+
+        KidsNote kidsNote = KidsNote.createFromText(kid, text, expiresAt);
+        return kidsNoteRepository.save(kidsNote).getId();
 
     }
 

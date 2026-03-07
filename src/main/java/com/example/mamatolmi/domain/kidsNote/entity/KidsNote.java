@@ -40,5 +40,13 @@ public class KidsNote extends BaseEntity {
         note.expiresAt = expiresAt;
         return note;
     }
+    public static KidsNote createFromText(Kid kid, String rawText, LocalDateTime expiresAt) {
+        KidsNote note = new KidsNote();
+        note.kid = kid;
+        note.sourceType = SourceType.TEXT;
+        note.rawText = rawText;
+        note.expiresAt = expiresAt;
+        return note;
+    }
 
 }

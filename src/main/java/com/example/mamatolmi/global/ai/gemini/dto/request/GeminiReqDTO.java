@@ -29,5 +29,10 @@ public class GeminiReqDTO {
                 String mimeType,
                 String data
         ) {}
+
+    }
+    public record GeminiChatRequest(List<Content> contents) {
+        public record Content(String role, List<Part> parts) {}
+        public record Part(String text) {}
     }
 }

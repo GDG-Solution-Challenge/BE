@@ -17,4 +17,9 @@ public class GeminiResDTO {
         public String text;
     }
 
+    public record GeminiChatResponse(List<Candidate> candidates) {
+        public record Candidate(Content content) {}
+        public record Content(List<Part> parts) {}
+        public record Part(String text) {}
+    }
 }

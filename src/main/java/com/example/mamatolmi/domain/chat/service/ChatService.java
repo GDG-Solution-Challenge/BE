@@ -43,7 +43,9 @@ public class ChatService {
     // 제미나이 API 엔드포인트
     private static final String GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=";
 
-    // 채팅방 생성
+    /*
+     * 채팅방 생성
+     * */
     @Transactional
     public ChatResponseDTO.ChatRoomCreateResult createChatRoom(ChatRequestDTO.ChatRoomCreate chatRoomCreate) {
         // 1. 유저와 키즈노트가 진짜로 존재하는지
@@ -67,6 +69,9 @@ public class ChatService {
         );
     }
 
+    /*
+     * ai와 대화하기
+     * */
     @Transactional
     public ChatResponseDTO sendMessage(Long roomId, ChatRequestDTO.ChatMessage chatMessage) {
         // 1. 채팅방 찾기
@@ -115,7 +120,30 @@ public class ChatService {
     }
 
 
+    /*
+    * 채팅방 기록 보여주기
+    * */
+    @Transactional
+    public ChatResponseDTO.ChatHistoryResult getChatHistory(Long roomId) {
+        // 1. 채팅방 찾기
+        ChatRoom chatRoom = chatRoomRepository.findById(roomId)
+                .orElseThrow(() -> new ChatException(ChatErrorCode.ChAT_ROOM_NOT_FOUND));
+        // 2. 해당 방의 메시지 목록을 생성일자 순으로 조회
+        List<ChatMessage> messages = chatMessageRepository.findByChatRoomIdOrderByCreatedAtAsc(roomId);
 
+        // 3. Entity -> DTO 변환
+        List<ChatResponseDTO.ChatMessageDetail> messageDetails = messages.stream()
+                .map(msg -> new ChatResponseDTO.ChatMessageDetail(
+                        msg.getId(),
+                        msg.getSender().name(),
+                        msg.getContent(),
+                        msg.getCreatedAt()
+                ))
+                .toList();
+
+        return new ChatResponseDTO.ChatHistoryResult(messageDetails);
+
+    }
 
 
 }

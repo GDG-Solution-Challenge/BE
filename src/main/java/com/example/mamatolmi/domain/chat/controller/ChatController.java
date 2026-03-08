@@ -8,10 +8,7 @@ import com.example.mamatolmi.global.apiPayload.ApiResponse;
 import com.example.mamatolmi.global.apiPayload.code.GeneralSuccessCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
@@ -19,9 +16,19 @@ import org.springframework.web.bind.annotation.RestController;
 public class ChatController {
     private final ChatService chatService;
 
+    // 채팅방 생성
+    @PostMapping("/rooms")
+    public ApiResponse<ChatResponseDTO.ChatRoomCreateResult> createChatRoom(@RequestBody ChatRequestDTO.ChatRoomCreate chatRoomCreate) {
+        return ApiResponse.onSuccess(GeneralSuccessCode._OK,chatService.createChatRoom(chatRoomCreate));
+    }
+
     // 질문하기 API
-    @PostMapping("/send")
-    public ApiResponse<ChatResponseDTO> sendMessage(@RequestBody ChatRequestDTO requestDTO) {
-        return ApiResponse.onSuccess(GeneralSuccessCode._OK, chatService.sendMessage(requestDTO));
+    // 해석: {roomId}번 채팅방(rooms)에 메시지(messages)를 생성
+    @PostMapping("/rooms/{roomId}/messages")
+    public ApiResponse<ChatResponseDTO> sendMessage(
+            @PathVariable("roomId") Long roomId,
+            @RequestBody ChatRequestDTO.ChatMessage chatMessage
+    ) {
+        return ApiResponse.onSuccess(GeneralSuccessCode._OK, chatService.sendMessage(roomId, chatMessage));
     }
 }

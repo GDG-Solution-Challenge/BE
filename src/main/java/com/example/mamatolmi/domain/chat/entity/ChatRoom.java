@@ -5,6 +5,7 @@ import com.example.mamatolmi.domain.user.entity.User;
 import com.example.mamatolmi.global.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -34,6 +35,10 @@ public class ChatRoom extends BaseEntity {
     @OneToMany(mappedBy = "chatRoom", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ChatMessage> messages = new ArrayList<>();
 
-
+    @Builder
+    public ChatRoom(User user, KidsNote kidsNote) {
+        this.user = user;
+        this.kidsNote = kidsNote;
+    }
 
 }

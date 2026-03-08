@@ -1,4 +1,4 @@
-package com.example.mamatolmi.domain.kidsNote.exception.code;
+package com.example.mamatolmi.domain.user.exception.code;
 
 import com.example.mamatolmi.global.apiPayload.code.BaseErrorCode;
 import com.example.mamatolmi.global.apiPayload.code.BaseSuccessCode;
@@ -8,8 +8,8 @@ import org.springframework.http.HttpStatus;
 
 @Getter
 @AllArgsConstructor
-public enum KidsNoteErrorCode implements BaseErrorCode {
-    KIDSNOTE_NOT_FOUND(HttpStatus.NOT_FOUND, "KIDSNOTE404_1", "존재하지 않는 알림장입니다."),
+public enum UserErrorCode implements BaseErrorCode {
+    USER_NOT_FOUND(HttpStatus.NOT_FOUND, "USER404_1", "존재하지 않는 유저입니다.")
     ;
 
     private final HttpStatus status;

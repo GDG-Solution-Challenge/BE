@@ -9,12 +9,21 @@ import com.example.mamatolmi.domain.chat.exception.ChatException;
 import com.example.mamatolmi.domain.chat.exception.code.ChatErrorCode;
 import com.example.mamatolmi.domain.chat.repository.ChatMessageRepository;
 import com.example.mamatolmi.domain.chat.repository.ChatRoomRepository;
+import com.example.mamatolmi.domain.kidsNote.entity.KidsNote;
+import com.example.mamatolmi.domain.kidsNote.exception.KidsNoteException;
+import com.example.mamatolmi.domain.kidsNote.exception.code.KidsNoteErrorCode;
+import com.example.mamatolmi.domain.kidsNote.repository.KidsNoteRepository;
+import com.example.mamatolmi.domain.user.entity.User;
+import com.example.mamatolmi.domain.user.exception.UserException;
+import com.example.mamatolmi.domain.user.exception.code.UserErrorCode;
+import com.example.mamatolmi.domain.user.repository.UserRepository;
 import com.example.mamatolmi.global.ai.gemini.dto.request.GeminiReqDTO;
 import com.example.mamatolmi.global.ai.gemini.dto.response.GeminiResDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
@@ -24,6 +33,8 @@ import java.util.List;
 public class ChatService {
     private final ChatRoomRepository chatRoomRepository;
     private final ChatMessageRepository chatMessageRepository;
+    private final UserRepository userRepository;
+    private final KidsNoteRepository kidsNoteRepository;
     private final RestTemplate restTemplate;
 
     @Value("${GEMINI_API_KEY}")
@@ -31,17 +42,42 @@ public class ChatService {
 
     // 제미나이 API 엔드포인트
     private static final String GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=";
+
+    // 채팅방 생성
     @Transactional
-    public ChatResponseDTO sendMessage(ChatRequestDTO requestDTO) {
+    public ChatResponseDTO.ChatRoomCreateResult createChatRoom(ChatRequestDTO.ChatRoomCreate chatRoomCreate) {
+        // 1. 유저와 키즈노트가 진짜로 존재하는지
+        User user = userRepository.findById(chatRoomCreate.userId())
+                .orElseThrow(() -> new UserException(UserErrorCode.USER_NOT_FOUND));
+
+        KidsNote kidsNote = kidsNoteRepository.findById(chatRoomCreate.kidsNoteId())
+                .orElseThrow(() -> new KidsNoteException(KidsNoteErrorCode.KIDSNOTE_NOT_FOUND));
+
+        // 2. 방을 만들 때 주인(User)과 주제(KidsNote)를 연결해서 생성
+        ChatRoom chatRoom = ChatRoom.builder()
+                .user(user)
+                .kidsNote(kidsNote)
+                .build();
+
+        ChatRoom savedRoom = chatRoomRepository.save(chatRoom);
+
+        return new ChatResponseDTO.ChatRoomCreateResult(
+                savedRoom.getId(),
+                savedRoom.getCreatedAt()
+        );
+    }
+
+    @Transactional
+    public ChatResponseDTO sendMessage(Long roomId, ChatRequestDTO.ChatMessage chatMessage) {
         // 1. 채팅방 찾기
-        ChatRoom chatRoom = chatRoomRepository.findById(requestDTO.getChatRoomId())
+        ChatRoom chatRoom = chatRoomRepository.findById(roomId)
                 .orElseThrow(() -> new ChatException(ChatErrorCode.ChAT_ROOM_NOT_FOUND));
 
         // 2. 사용자가 보낸 메시지를 DB에 저장
         ChatMessage userMessage = ChatMessage.builder()
                 .chatRoom(chatRoom)
                 .sender(SenderRole.USER)
-                .content(requestDTO.getMessage())
+                .content(chatMessage.message())
                 .build();
         chatMessageRepository.save(userMessage);
 
@@ -50,7 +86,7 @@ public class ChatService {
         List<ChatMessage> history = chatMessageRepository.findByChatRoomIdOrderByCreatedAtAsc(chatRoom.getId());
 
         // 4. 제미나이 API에 보낼 JSON 요청(Request) 만들기
-        GeminiReqDTO.GeminiChatRequest.Part part = new GeminiReqDTO.GeminiChatRequest.Part(requestDTO.getMessage());
+        GeminiReqDTO.GeminiChatRequest.Part part = new GeminiReqDTO.GeminiChatRequest.Part(chatMessage.message());
         GeminiReqDTO.GeminiChatRequest.Content content = new GeminiReqDTO.GeminiChatRequest.Content("user", List.of(part));
         GeminiReqDTO.GeminiChatRequest geminiRequest = new GeminiReqDTO.GeminiChatRequest(List.of(content));
 
@@ -77,6 +113,8 @@ public class ChatService {
         // 8. 프론트엔드로 답변 리턴
         return new ChatResponseDTO(aiText);
     }
+
+
 
 
 

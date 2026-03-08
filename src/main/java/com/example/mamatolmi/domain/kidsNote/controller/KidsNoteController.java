@@ -1,8 +1,6 @@
 package com.example.mamatolmi.domain.kidsNote.controller;
 
 import com.example.mamatolmi.domain.kidsNote.dto.request.KidsNoteReqDTO;
-import com.example.mamatolmi.domain.kidsNote.dto.response.KidsNoteResDTO;
-import com.example.mamatolmi.domain.kidsNote.entity.KidsNote;
 import com.example.mamatolmi.domain.kidsNote.service.KidsNoteService;
 import com.example.mamatolmi.global.apiPayload.ApiResponse;
 import com.example.mamatolmi.global.apiPayload.code.GeneralSuccessCode;

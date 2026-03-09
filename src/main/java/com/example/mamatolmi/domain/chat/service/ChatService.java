@@ -1,5 +1,7 @@
 package com.example.mamatolmi.domain.chat.service;
 
+import com.example.mamatolmi.domain.aiResponse.entity.AiResponse;
+import com.example.mamatolmi.domain.aiResponse.repository.AiResponseRepository;
 import com.example.mamatolmi.domain.chat.dto.request.ChatRequestDTO;
 import com.example.mamatolmi.domain.chat.dto.response.ChatResponseDTO;
 import com.example.mamatolmi.domain.chat.entity.ChatMessage;
@@ -23,9 +25,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -35,13 +37,14 @@ public class ChatService {
     private final ChatMessageRepository chatMessageRepository;
     private final UserRepository userRepository;
     private final KidsNoteRepository kidsNoteRepository;
+    private final AiResponseRepository aiResponseRepository;
     private final RestTemplate restTemplate;
 
     @Value("${GEMINI_API_KEY}")
     private String geminiApiKey;
 
     // 제미나이 API 엔드포인트
-    private static final String GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=";
+    private static final String GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent";
 
     /*
      * 채팅방 생성
@@ -74,11 +77,22 @@ public class ChatService {
      * */
     @Transactional
     public ChatResponseDTO sendMessage(Long roomId, ChatRequestDTO.ChatMessage chatMessage) {
-        // 1. 채팅방 찾기
+        // 1. 채팅방 조회
         ChatRoom chatRoom = chatRoomRepository.findById(roomId)
                 .orElseThrow(() -> new ChatException(ChatErrorCode.ChAT_ROOM_NOT_FOUND));
 
-        // 2. 사용자가 보낸 메시지를 DB에 저장
+        KidsNote kidsNote = chatRoom.getKidsNote();
+
+        // 2. 알림장 ID로 미리 분석해둔 AiResponse 데이터 가져오기
+        // (분석 결과가 없을 수도 있으니 기본값을 빈 문자열로 세팅)
+        AiResponse aiResponse = aiResponseRepository.findByKidsNote(kidsNote)
+                .orElse(null);
+
+        String summary = (aiResponse != null) ? aiResponse.getSummary() : "요약 정보 없음";
+        String todoList = (aiResponse != null) ? aiResponse.getTodoList() : "할 일 정보 없음";
+        String guide = (aiResponse != null) ? aiResponse.getGuide() : "가이드 정보 없음";
+
+        // 3. 사용자가 보낸 메시지를 DB에 저장
         ChatMessage userMessage = ChatMessage.builder()
                 .chatRoom(chatRoom)
                 .sender(SenderRole.USER)
@@ -86,20 +100,46 @@ public class ChatService {
                 .build();
         chatMessageRepository.save(userMessage);
 
-        // 3. 키즈노트 원본 내용 및 과거 대화 내역 불러오기
+        // 4. 키즈노트 원본 내용 및 과거 대화 내역 불러오기
         // AI가 문맥을 파악하려면 과거 대화 내역(history)을 같이 보내주는 것이 좋음
         List<ChatMessage> history = chatMessageRepository.findByChatRoomIdOrderByCreatedAtAsc(chatRoom.getId());
+        List<GeminiReqDTO.GeminiChatRequest.Content> contents = new ArrayList<>();
 
-        // 4. 제미나이 API에 보낼 JSON 요청(Request) 만들기
-        GeminiReqDTO.GeminiChatRequest.Part part = new GeminiReqDTO.GeminiChatRequest.Part(chatMessage.message());
-        GeminiReqDTO.GeminiChatRequest.Content content = new GeminiReqDTO.GeminiChatRequest.Content("user", List.of(part));
-        GeminiReqDTO.GeminiChatRequest geminiRequest = new GeminiReqDTO.GeminiChatRequest(List.of(content));
+        // 과거 대화를 제미나이 규격(Content)으로 변환해서 리스트에 담기
+        for (ChatMessage msg : history) {
+            // 방금 저장한 '현재 질문'은 제외합니다. 알림장 정보랑 합쳐서 넣음
+            if (msg.getId().equals(userMessage.getId())) continue;
 
-        // 5. 제미나이 API 호출
-        String requestUrl = GEMINI_URL + geminiApiKey;
+            // DB의 SenderRole을 제미나이 역할 이름으로 변환 (User는 "user", AI는 "model"로 해야 제미나이가 알아듣습니다)
+            String role = msg.getSender() == SenderRole.USER ? "user" : "model";
+            GeminiReqDTO.GeminiChatRequest.Part part = new GeminiReqDTO.GeminiChatRequest.Part(msg.getContent());
+            contents.add(new GeminiReqDTO.GeminiChatRequest.Content(role, List.of(part)));
+        }
+
+
+        // 5. AI에게 줄 프롬프트 조립
+        String finalPrompt = String.format(
+                "너는 어린이집 선생님이자 AI 육아 도우미야. 아래 [참고 데이터]를 바탕으로 부모님의 질문에 답변해줘.\n" +
+                        "--- [참고 데이터] ---\n" +
+                        "[알림장 원문]: %s\n" +
+                        "[AI 요약]: %s\n" +
+                        "[체크리스트(할 일)]: %s\n" +
+                        "[맞춤 가이드]: %s\n" +
+                        "-------------------\n\n" +
+                        "부모님 질문: %s",
+                kidsNote.getRawText(), summary, todoList, guide, chatMessage.message()
+        );
+
+        GeminiReqDTO.GeminiChatRequest.Part finalPart = new GeminiReqDTO.GeminiChatRequest.Part(finalPrompt);
+        contents.add(new GeminiReqDTO.GeminiChatRequest.Content("user", List.of(finalPart)));
+
+        // 6. 제미나이 API 실제 호출
+        GeminiReqDTO.GeminiChatRequest geminiRequest = new GeminiReqDTO.GeminiChatRequest(contents);
+        String requestUrl = GEMINI_URL + "?key=" + geminiApiKey;
+
         GeminiResDTO.GeminiChatResponse geminiResponse = restTemplate.postForObject(requestUrl, geminiRequest, GeminiResDTO.GeminiChatResponse.class);
 
-        // 6. 제미나이 답변 파싱(추출)
+        // 7. 응답 추출 및 DB 저장
         String aiText = "";
         if (geminiResponse != null && !geminiResponse.candidates().isEmpty()) {
             aiText = geminiResponse.candidates().get(0).content().parts().get(0).text();
@@ -107,7 +147,6 @@ public class ChatService {
             aiText = "AI가 응답을 생성하지 못했습니다.";
         }
 
-        // 7. AI의 답변을 DB에 저장
         ChatMessage aiMessage = ChatMessage.builder()
                 .chatRoom(chatRoom)
                 .sender(SenderRole.ASSISTANT) // AI 보냄
@@ -115,8 +154,8 @@ public class ChatService {
                 .build();
         chatMessageRepository.save(aiMessage);
 
-        // 8. 프론트엔드로 답변 리턴
         return new ChatResponseDTO(aiText);
+
     }
 
 

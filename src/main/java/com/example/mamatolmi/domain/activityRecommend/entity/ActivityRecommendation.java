@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(name = "activity_recommendation")
-public class ActivityRecommendation extends BaseEntity {
+public class ActivityRecommendation {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

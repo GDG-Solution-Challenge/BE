@@ -38,4 +38,10 @@ public class AiResponse extends BaseEntity {
         this.guide = guide;
         this.kidsNote = kidsNote;
     }
+
+    public void update(String summary, String todoList, String guide){
+        this.summary = summary;
+        this.todoList = todoList;
+        this.guide = guide;
+    }
 }

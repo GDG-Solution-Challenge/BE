@@ -12,6 +12,10 @@ import com.example.mamatolmi.domain.kid.entity.Kid;
 import com.example.mamatolmi.domain.kid.enums.Gender;
 import com.example.mamatolmi.domain.kidsNote.entity.KidsNote;
 import com.example.mamatolmi.domain.kidsNote.repository.KidsNoteRepository;
+import com.example.mamatolmi.domain.user.entity.User;
+import com.example.mamatolmi.domain.user.enums.KoreanLevelType;
+import com.example.mamatolmi.domain.user.enums.ResponseLanguageType;
+import com.example.mamatolmi.domain.user.repository.UserRepository;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +25,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.time.Period;
 import java.util.List;
+import java.util.Optional;
 
 @Slf4j
 @Service
@@ -49,6 +54,11 @@ public class AiResponseService {
 
         int age = Period.between(birthDay, LocalDate.now()).getYears();
 
+        // 2-1. 사용자 정보 조회
+        User user = kid.getUser();
+        KoreanLevelType koreanLevel = user.getKoreanLevel();
+        ResponseLanguageType responseLanguage = user.getResponseLanguage();
+
         // 3. 체크리스트 조회
         List<Checklist> checklists = checklistRepository.findByAge(age);
 
@@ -61,6 +71,8 @@ public class AiResponseService {
                 kidName,
                 gender,
                 age,
+                koreanLevel,
+                responseLanguage,
                 kidsNote.getRawText(),
                 checklists,
                 recommends
@@ -128,6 +140,8 @@ public class AiResponseService {
             String kidName,
             Gender gender,
             int age,
+            KoreanLevelType koreanLevel,
+            ResponseLanguageType responseLanguage,
             String kidsNoteJson,
             List<Checklist> checklists,
             List<ActivityRecommendation> recommends
@@ -162,6 +176,17 @@ AI가 분석하여 구조화한 데이터입니다.
             prompt.append("- ").append(r.getContent()).append("\n");
         }
 
+        if(responseLanguage == ResponseLanguageType.KOREAN){
+            prompt.append("현재 이 부모의 한국어 실력 정도는 ");
+            prompt.append(koreanLevel);
+            prompt.append("입니다.\n");
+            prompt.append("한국어 실력에 알맞게 이해할 수 있도록 답변하세요.\n");
+        }else{
+            prompt.append("응답은 반드시 ");
+            prompt.append(responseLanguage);
+            prompt.append(" 언어로 작성하세요.\n");
+        }
+
         prompt.append("""
 위 정보를 종합하여 다음을 수행하세요.
 
@@ -172,13 +197,13 @@ AI가 분석하여 구조화한 데이터입니다.
 
 작성 규칙
 - summary : 최대 3문장
-- todoList : 최대 3개 항목
+- todoList : 최대 3개 항목을 개행문자를 넣어 한 문장으로 작성하세요.
 - guide : 최대 3문장
 - 간결하고 부모가 바로 이해할 수 있는 문장으로 작성하세요.
 - 체크리스트 전체 설명은 하지 마세요.
 
 반드시 아래 JSON 형식으로만 응답하세요.
-모든 항목은 마크업 형식으로 제공고 todoList는 마크업 체크리스트 형식으로 제공하세요.
+모든 항목은 마크업 형식으로 제공고 todoList는 마크업 체크리스트 형식의 한 문장으로 제공하세요.
 설명, 마크다운, 코드블록은 절대 포함하지 마세요.
 
 {

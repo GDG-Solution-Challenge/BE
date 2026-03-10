@@ -35,3 +35,7 @@ spring:
 gemini:
   apiKey: ${GEMINI_API_KEY}
   model: gemini-2.5-flash
+
+jwt:
+  secret: ${JWT_SECRET}
+  expiration: 360000

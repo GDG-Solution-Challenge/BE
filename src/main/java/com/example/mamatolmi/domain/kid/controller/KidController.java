@@ -22,4 +22,14 @@ public class KidController {
 
         return ApiResponse.onSuccess(GeneralSuccessCode._OK, kidService.createKid(userId, request));
     }
+
+
+    /*
+     * 자녀 프로필 대시보드 (요약 정보, 강점, 종합피드백) 조회
+     */
+    @GetMapping("/kids/{kidId}/dashboard")
+    public ApiResponse<KidResponseDTO.KidDashboardResult> getKidDashboard(
+            @PathVariable("kidId") Long kidId) {
+        return ApiResponse.onSuccess(GeneralSuccessCode._OK, kidService.getKidDashboard(kidId));
+    }
 }

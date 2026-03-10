@@ -10,6 +10,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -37,6 +39,20 @@ public class Kid extends BaseEntity {
     // 자녀 나이
     @Column(nullable = false)
     private LocalDate birthDate;
+
+    // 성향 분석
+    @Column(columnDefinition = "TEXT")
+    private String analysis;
+
+    // 강점 리스트 ("창의력", "사회성", "리더십" 등)
+    @ElementCollection(fetch = FetchType.LAZY)
+    @CollectionTable(name = "kid_strengths", joinColumns = @JoinColumn(name = "kid_id"))
+    @Column(name = "strength")
+    private List<String> strengths = new ArrayList<>();
+
+    // 종합 피드백
+    @Column(columnDefinition = "TEXT")
+    private String comprehensiveFeedback;
 
     @Builder
     public Kid(User user, String name, Gender gender, LocalDate birthDate) {

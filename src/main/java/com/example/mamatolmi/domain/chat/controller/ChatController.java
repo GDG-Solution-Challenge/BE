@@ -40,4 +40,14 @@ public class ChatController implements ChatControllerDocs {
             @PathVariable("roomId") Long roomId){
         return ApiResponse.onSuccess(GeneralSuccessCode._OK,chatService.getChatHistory(roomId));
     }
+
+    /*
+    *  채팅방 조회
+    자녀별 채팅방 목록 조회 API
+     */
+    @GetMapping("/rooms")
+    @Override
+    public ApiResponse<ChatResponseDTO.ChatSidebarResult> getChatSidebar(@RequestParam("userId") Long userId){
+        return ApiResponse.onSuccess(GeneralSuccessCode._OK, chatService.getChatSidebar(userId));
+    }
 }

@@ -3,12 +3,10 @@ package com.example.mamatolmi.domain.chat.controller;
 import com.example.mamatolmi.domain.chat.dto.request.ChatRequestDTO;
 import com.example.mamatolmi.domain.chat.dto.response.ChatResponseDTO;
 import com.example.mamatolmi.global.apiPayload.ApiResponse;
+import com.example.mamatolmi.global.apiPayload.code.GeneralSuccessCode;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.*;
 
 public interface ChatControllerDocs {
     // 채팅방 생성
@@ -48,4 +46,17 @@ public interface ChatControllerDocs {
     @GetMapping("/rooms/{roomId}/messages")
     ApiResponse<ChatResponseDTO.ChatHistoryResult> getChatHistory(
             @PathVariable("roomId") Long roomId);
+
+
+
+    // 채팅방 기록 보여주기
+    @Operation(
+            summary = "사용자별 채팅방 목록 보여주기"
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "실패")
+    })
+    @GetMapping("/rooms")
+   ApiResponse<ChatResponseDTO.ChatSidebarResult> getChatSidebar(@RequestParam("userId") Long userId);
 }

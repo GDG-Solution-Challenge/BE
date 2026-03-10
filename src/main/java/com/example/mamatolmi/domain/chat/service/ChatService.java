@@ -21,14 +21,24 @@ import com.example.mamatolmi.domain.user.exception.code.UserErrorCode;
 import com.example.mamatolmi.domain.user.repository.UserRepository;
 import com.example.mamatolmi.global.ai.gemini.dto.request.GeminiReqDTO;
 import com.example.mamatolmi.global.ai.gemini.dto.response.GeminiResDTO;
+import com.example.mamatolmi.global.apiPayload.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.client.RestTemplate;
 
+import java.time.DayOfWeek;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -186,6 +196,54 @@ public class ChatService {
                 .toList();
 
         return new ChatResponseDTO.ChatHistoryResult(messageDetails);
+
+    }
+
+    /*
+    *  채팅방 사이드바 목록 보여주기
+    자녀별 채팅방 목록 조회 API
+     */
+    @Transactional(readOnly = true)
+    public ChatResponseDTO.ChatSidebarResult getChatSidebar(Long userId) {
+        // 유저 검증
+       if (!userRepository.existsById(userId)) {
+           throw new UserException(UserErrorCode.USER_NOT_FOUND);
+       }
+        // 이번 주 월요일 00:00:00 계산
+        LocalDateTime startOfWeek = LocalDate.now()
+                .with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
+                .atStartOfDay();
+
+        // 이번 주 월요일 이후의 채팅방만 조회
+        List<ChatRoom> chatRooms = chatRoomRepository.findAllByUserIdAndDateAfter(userId, startOfWeek);
+
+       // 자녀 기준으로 채팅방 그룹화(키즈노트에서 자녀 정보 뺴오기)
+        Map<Long, List<ChatRoom>> groupedByChild = chatRooms.stream()
+                .collect(Collectors.groupingBy(room -> room.getKidsNote().getKid().getId()));
+
+        //날짜 포맷터 생성 ("3/02")
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("M/dd");
+
+        // DTO로 변환
+        List<ChatResponseDTO.ChildChatGroup> childChatGroups = groupedByChild.entrySet().stream()
+                .map(entry -> {
+                    Long childId = entry.getKey();
+                    // 그룹의 첫 번째 방에서 자녀 이름을 가져옴
+                    String childName = entry.getValue().get(0).getKidsNote().getKid().getName();
+
+                    // 해당 자녀의 채팅방들을 Summary DTO로 변환
+                    List<ChatResponseDTO.ChatRoomSummary> roomSummaries = entry.getValue().stream()
+                            .map(room -> new ChatResponseDTO.ChatRoomSummary(
+                                    room.getId(),
+                                    room.getCreatedAt().format(formatter)
+                            ))
+                            .toList();
+
+                    return new ChatResponseDTO.ChildChatGroup(childId, childName, roomSummaries);
+                })
+                .toList();
+
+        return new ChatResponseDTO.ChatSidebarResult(childChatGroups);
 
     }
 

@@ -114,7 +114,7 @@ jobs:
             DB_URL=${{ secrets.DB_URL }}
             DB_USERNAME=${{ secrets.DB_USERNAME }}
             DB_PASSWORD=${{ secrets.DB_PASSWORD }}
-            GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }
+            GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}
             JWT_SECRET=${{ secrets.JWT_SECRET }}
             GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
             GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}

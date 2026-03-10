@@ -21,6 +21,21 @@ spring:
       hibernate:
         format_sql: true # 출력되는 SQL 쿼리를 보기 좋게 포맷팅
 
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${GOOGLE_CLIENT_ID}
+            client-secret: ${GOOGLE_CLIENT_SECRET}
+            scope:
+              - profile
+              - email
+
 gemini:
   apiKey: ${GEMINI_API_KEY}
   model: gemini-2.5-flash
+
+jwt:
+  secret: ${JWT_SECRET}
+  expiration: 360000

@@ -116,6 +116,8 @@ jobs:
             DB_PASSWORD=${{ secrets.DB_PASSWORD }}
             GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }
             JWT_SECRET=${{ secrets.JWT_SECRET }}
+            GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
+            GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}
       # If required, use the Cloud Run URL output in later steps
       - name: 'Show output'
         run: |2-

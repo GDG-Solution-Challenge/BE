@@ -37,7 +37,18 @@ public class AuthSuccessHandler implements AuthenticationSuccessHandler {
 
         String token = jwtProvider.createToken(user.getId());
 
-        response.sendRedirect("http://mamatolmiscreen.vercel.app/oauth-success?token=" + token);
+        String redirectUrl;
+        String origin = request.getHeader("origin");
 
+        if(origin != null && origin.contains("localhost")){
+            redirectUrl = "http://localhost:5173/oauth-success";
+        }
+        else{
+            redirectUrl = "http://mamatolmiscreen.vercel.app/oauth-success";
+        }
+
+        response.sendRedirect(redirectUrl + "?token=" + token);
+
+        //response.sendRedirect("http://mamatolmiscreen.vercel.app/oauth-success?token=" + token);
     }
 }

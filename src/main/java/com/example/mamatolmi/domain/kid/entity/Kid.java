@@ -10,6 +10,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -53,6 +54,19 @@ public class Kid extends BaseEntity {
     // 종합 피드백
     @Column(columnDefinition = "TEXT")
     private String comprehensiveFeedback;
+
+    @Column(name = "last_analyzed_at")
+    private LocalDateTime lastAnalyzedAt; // 마지막 분석 시간
+
+    // 분석 결과 업데이트 메서드
+    public void updateProfileAnalysis(String analysis, List<String> strengths, String comprehensiveFeedback) {
+        this.analysis = analysis;
+        // 기존 컬렉션을 비우고 새 데이터로 채웁니다 (JPA ElementCollection 특성 고려)
+        this.strengths.clear();
+        this.strengths.addAll(strengths);
+        this.comprehensiveFeedback = comprehensiveFeedback;
+        this.lastAnalyzedAt = LocalDateTime.now();
+    }
 
     @Builder
     public Kid(User user, String name, Gender gender, LocalDate birthDate) {

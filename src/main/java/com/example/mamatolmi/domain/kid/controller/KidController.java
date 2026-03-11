@@ -23,9 +23,18 @@ public class KidController {
         return ApiResponse.onSuccess(GeneralSuccessCode._OK, kidService.createKid(userId, request));
     }
 
+    @PostMapping("/kids/{kidId}/analyze")
+    public ApiResponse<KidResponseDTO.KidDashboardResult> generateProfileAnalysis(
+            @PathVariable("kidId") Long kidId) {
+
+        return ApiResponse.onSuccess(
+                GeneralSuccessCode._OK,
+                kidService.generateProfileAnalysis(kidId)
+        );
+    }
 
     /*
-     * 자녀 프로필 대시보드 (요약 정보, 강점, 종합피드백) 조회
+     * 자녀 프로필 대시보드 (요약 정보, 강점, 종합피드백, 주간기록) 조회
      */
     @GetMapping("/kids/{kidId}/dashboard")
     public ApiResponse<KidResponseDTO.KidDashboardResult> getKidDashboard(

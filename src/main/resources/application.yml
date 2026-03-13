@@ -43,4 +43,4 @@ gemini:
 
 jwt:
   secret: ${JWT_SECRET}
-  expiration: 360000
+  expiration: 3600000

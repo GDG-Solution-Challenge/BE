@@ -1,5 +1,6 @@
 package com.example.mamatolmi.domain.auth.config;
 
+import com.example.mamatolmi.domain.auth.filter.RedirectUriSaveFilter;
 import com.example.mamatolmi.domain.auth.handler.AuthSuccessHandler;
 import com.example.mamatolmi.domain.auth.service.AuthService;
 import com.example.mamatolmi.global.security.jwt.JwtFilter;
@@ -18,6 +19,7 @@ public class SecurityConfig {
     private final AuthService authService;
     private final AuthSuccessHandler authHandler;
     private final JwtFilter jwtFilter;
+    private final RedirectUriSaveFilter redirectUriSaveFilter;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -36,7 +38,9 @@ public class SecurityConfig {
                         .successHandler(authHandler)
                 )
 
-                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(redirectUriSaveFilter, UsernamePasswordAuthenticationFilter.class);
+
 
         return http.build();
     }

@@ -8,6 +8,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
@@ -15,6 +16,7 @@ import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class AuthSuccessHandler implements AuthenticationSuccessHandler {
@@ -37,26 +39,27 @@ public class AuthSuccessHandler implements AuthenticationSuccessHandler {
 
         String token = jwtProvider.createToken(user.getId());
 
-        String redirectUrl;
+        String redirectUrl =
+                (String) request.getSession().getAttribute("redirect_uri");
 
-        if (request.getServerName().contains("localhost")) {
-            redirectUrl = "http://localhost:5173/oauth-success";
-        } else {
+        if (redirectUrl == null) {
             redirectUrl = "https://mamatolmiscreen.vercel.app/oauth-success";
         }
 
+        request.getSession().removeAttribute("redirect_uri");
+
         response.sendRedirect(redirectUrl + "?token=" + token);
 
-//        String redirectUrl = request.getParameter("redirect_uri");
+//        String redirectUrl;
 //
-//
-//        if (redirectUrl == null) {
+//        if (request.getServerName().contains("localhost")) {
+//            redirectUrl = "http://localhost:5173/oauth-success";
+//        } else {
 //            redirectUrl = "https://mamatolmiscreen.vercel.app/oauth-success";
 //        }
 //
-//        //request.getSession().removeAttribute("redirect_uri");
+//        response.sendRedirect(redirectUrl + "?token=" + token);
 
-       // response.sendRedirect(redirectUrl + "?token=" + token);
         //response.sendRedirect("http://mamatolmiscreen.vercel.app/oauth-success?token=" + token);
     }
 }

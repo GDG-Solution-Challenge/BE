@@ -37,13 +37,9 @@ public class AuthSuccessHandler implements AuthenticationSuccessHandler {
 
         String token = jwtProvider.createToken(user.getId());
 
-        String redirectUrl;
-        String referer = request.getHeader("referer");
+        String redirectUrl = request.getParameter("redirect_uri");
 
-        if(referer != null && referer.contains("localhost")){
-            redirectUrl = "http://localhost:5173/oauth-success";
-        }
-        else{
+        if (redirectUrl == null) {
             redirectUrl = "https://mamatolmiscreen.vercel.app/oauth-success";
         }
 

@@ -16,6 +16,7 @@ import com.example.mamatolmi.domain.kidsNote.exception.KidsNoteException;
 import com.example.mamatolmi.domain.kidsNote.exception.code.KidsNoteErrorCode;
 import com.example.mamatolmi.domain.kidsNote.repository.KidsNoteRepository;
 import com.example.mamatolmi.domain.user.entity.User;
+import com.example.mamatolmi.domain.user.enums.ResponseLanguageType;
 import com.example.mamatolmi.domain.user.exception.UserException;
 import com.example.mamatolmi.domain.user.exception.code.UserErrorCode;
 import com.example.mamatolmi.domain.user.repository.UserRepository;
@@ -92,6 +93,9 @@ public class ChatService {
                 .orElseThrow(() -> new ChatException(ChatErrorCode.ChAT_ROOM_NOT_FOUND));
 
         KidsNote kidsNote = chatRoom.getKidsNote();
+        User user = chatRoom.getUser();
+
+        String targetLanguage = getLanguageName(user.getResponseLanguage());
 
         // 2. 알림장 ID로 미리 분석해둔 AiResponse 데이터 가져오기
         // (분석 결과가 없을 수도 있으니 기본값을 빈 문자열로 세팅)
@@ -127,10 +131,11 @@ public class ChatService {
         }
 
 
-        // 5. AI에게 줄 프롬프트 조립 (수정 버전)
+        // 5. AI에게 줄 프롬프트 조립
         String finalPrompt = String.format(
                 "너는 어린이집 선생님이자 AI 육아 도우미야. 아래 [참고 데이터]를 바탕으로 부모님의 질문에 답변해줘.\n" +
-                        "응답은 반드시 읽기 좋은 **마크업(Markdown) 형식**으로 작성하고, 불필요한 인사말이나 서론, 결론은 생략해.\n\n" +
+                        "응답은 반드시 읽기 좋은 **마크업(Markdown) 형식**으로 작성하고, 불필요한 인사말이나 서론, 결론은 생략해.\n" +
+                        "🔥 **[매우 중요] 사용자의 질문 언어와 상관없이, 너의 모든 답변은 무조건 반드시 '%s'로만 번역해서 작성해야 해!** 🔥\n\n" +
                         "--- [참고 데이터] ---\n" +
                         "[알림장 원문]: %s\n" +
                         "[AI 요약]: %s\n" +
@@ -142,7 +147,7 @@ public class ChatService {
                         "2. 리스트 형태(1., -, *)를 사용하여 가독성을 높여.\n" +
                         "3. 친절하지만 간결한 문체를 유지해.\n\n" +
                         "부모님 질문: %s",
-                kidsNote.getRawText(), summary, todoList, guide, chatMessage.message()
+                targetLanguage, kidsNote.getRawText(), summary, todoList, guide, chatMessage.message()
         );
 
         GeminiReqDTO.GeminiChatRequest.Part finalPart = new GeminiReqDTO.GeminiChatRequest.Part(finalPrompt);
@@ -245,6 +250,17 @@ public class ChatService {
 
         return new ChatResponseDTO.ChatSidebarResult(childChatGroups);
 
+    }
+
+    private String getLanguageName(ResponseLanguageType languageType) {
+        if (languageType == null) return "Korean";
+        return switch (languageType) {
+            case ENGLISH -> "English";
+            case CHINESE -> "Chinese (Simplified)";
+            case JAPANESE -> "Japanese";
+            case VIETNAMESE -> "Vietnamese";
+            default -> "Korean";
+        };
     }
 
 

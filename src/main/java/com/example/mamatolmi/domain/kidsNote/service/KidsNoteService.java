@@ -29,6 +29,11 @@ public class KidsNoteService {
         Kid kid = kidRepository.findById(kidId)
                 .orElseThrow(()->new KidException(KidErrorCode.KID_NOT_FOUND));
 
+        // 권한 검증: 이 아이의 부모가 현재 로그인한 유저가 맞는지
+//        if (!kid.getUser().getId().equals(userId)) {
+//            throw new UserException(UserErrorCode.USER_NOT_AUTHORIZED);
+//        }
+
 
         // 1) Gemini로 텍스트 추출
         String rawText = ocrClient.extractText(image);

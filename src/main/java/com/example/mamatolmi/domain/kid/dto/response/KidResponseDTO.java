@@ -1,5 +1,8 @@
 package com.example.mamatolmi.domain.kid.dto.response;
 
+import com.example.mamatolmi.domain.kid.enums.Gender;
+
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -37,4 +40,16 @@ public class KidResponseDTO {
             boolean isExist,   // 기록 여부
             String content    // "봄 꽃을 그리며 풍부한 색채 감각을 보여준 하루" (핵심 요약)
     ) {}
+
+
+    // kid list
+    public record KidListResult(
+            List<KidSummary> kids
+    ){}
+    public record KidSummary(
+            Long kidId,
+            String kidName,
+            Gender gender,
+            LocalDate birthDate
+    ){}
 }

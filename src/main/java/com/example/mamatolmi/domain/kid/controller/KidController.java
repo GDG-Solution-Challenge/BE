@@ -8,6 +8,8 @@ import com.example.mamatolmi.global.apiPayload.code.GeneralSuccessCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequiredArgsConstructor
 public class KidController {
@@ -41,4 +43,12 @@ public class KidController {
             @PathVariable("kidId") Long kidId) {
         return ApiResponse.onSuccess(GeneralSuccessCode._OK, kidService.getKidDashboard(kidId));
     }
+
+
+    // 키즈 목록 조회 GET /users/:userId/kids  전체 아이 목록 API
+    @GetMapping("/users/{userId}/kids")
+    public ApiResponse<KidResponseDTO.KidListResult> getKidsList(@PathVariable("userId") Long userId){
+        return ApiResponse.onSuccess(GeneralSuccessCode._OK, kidService.getKidsList(userId));
+    }
+
 }

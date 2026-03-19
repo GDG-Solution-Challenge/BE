@@ -68,6 +68,27 @@ public class KidService {
     }
 
     // ==========================================
+    // 키즈 목록 조회 GET /users/:userId/kids  전체 아이 목록 API
+    // ==========================================
+    public KidResponseDTO.KidListResult getKidsList(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UserException(UserErrorCode.USER_NOT_FOUND));
+
+        List<Kid> kids=kidRepository.findAllByUserId(userId);
+        List<KidResponseDTO.KidSummary> kidSummaryList = kids.stream()
+                .map(kid -> new KidResponseDTO.KidSummary(
+                        kid.getId(),
+                        kid.getName(),
+                        kid.getGender(),
+                        kid.getBirthDate()
+                ))
+                .toList();
+
+        return new KidResponseDTO.KidListResult(kidSummaryList);
+
+    }
+
+    // ==========================================
     // 2. 자녀 대시보드 전체 조회 (요약 + 이번 주 기록)
     // ==========================================
     @Transactional(readOnly = true)
